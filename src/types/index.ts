@@ -22,11 +22,6 @@ export interface EmergencyContact {
   relationship: string;
 }
 
-export interface Trade {
-  trade: string;
-  specialties: string[];
-}
-
 export interface ClientDocument extends Document {
   _id: Types.ObjectId;
   userId: Types.ObjectId; // Reference to User from auth-service
@@ -113,4 +108,33 @@ export interface ContractorDocument extends Document {
   findByTrade(tradeName: string): Promise<ContractorDocument[]>;
   findBySpecialty(specialtyName: string): Promise<ContractorDocument[]>;
   findBySubcategory(subcategoryName: string): Promise<ContractorDocument[]>;
+}
+
+interface Subspecialty {
+  specialty: string;
+  subspecialty: string[];
+}
+
+type Specialty = string[] | Subspecialty[];
+
+interface Trade {
+  trade: string;
+  specialties: Specialty;
+}
+
+export interface OpportunityDocument extends Document {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  projectName: string;
+  projectDescription: string;
+  price: number;
+  classification: string;
+  projectType: string;
+  contractorRole: string[];
+  generalProjects: string[];
+  tradeProjects: Trade[];
+  status: string;
+  duration: string;
+  hidePrice: boolean;
+  bidCount: number;
 }

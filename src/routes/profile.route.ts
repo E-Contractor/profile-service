@@ -2,7 +2,7 @@ import express from 'express';
 import {
   authMiddleware,
   serviceAuthMiddleware,
-} from '@/middleware/profile.middleware';
+} from '../middleware/profile.middleware';
 import * as ProfileController from '../controllers/profile.controller';
 
 const router = express.Router();
@@ -35,7 +35,7 @@ router.get(
   authMiddleware,
   ProfileController.getMyClientProfileController
 );
-router.put(
+router.patch(
   '/client/profile',
   authMiddleware,
   ProfileController.updateClientProfileController
@@ -52,7 +52,7 @@ router.get(
   authMiddleware,
   ProfileController.getMyContractorProfileController
 );
-router.put(
+router.patch(
   '/contractor/profile',
   authMiddleware,
   ProfileController.updateContractorProfileController
@@ -68,6 +68,8 @@ router.get(
   '/contractors/search',
   ProfileController.searchContractorsController
 );
+
+router.get('/contractor/:userId', ProfileController.getContractorById);
 
 // Profile completion route
 router.get(

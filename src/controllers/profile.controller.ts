@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
 
 import * as ProfileService from '../service/profile.service';
-import { Contractor } from '@/models/Contractor';
+import { Contractor } from '../models/Contractor';
 
 // ===== SERVICE-TO-SERVICE CONTROLLERS =====
 export const createClientProfileController = async (
@@ -31,7 +30,9 @@ export const createContractorProfileController = async (
   res: Response
 ) => {
   try {
+    console.log('Creating contractor profile with data:', req.body);
     const result = await ProfileService.createContractorProfile(req.body);
+    console.log(result);
 
     res.status(201).json({
       success: true,
@@ -39,6 +40,7 @@ export const createContractorProfileController = async (
       data: result,
     });
   } catch (error: any) {
+    console.error('Create contractor profile error:', error);
     res.status(400).json({
       success: false,
       message: error.message,
@@ -50,7 +52,9 @@ export const createContractorProfileController = async (
 export const getProfileController = async (req: Request, res: Response) => {
   try {
     const { userId, role } = req.params;
+    console.log('Getting profile for userId:', userId, 'role:', role);
     const profile = await ProfileService.getProfile(userId, role);
+    console.log('Profile found:', profile ? 'YES' : 'NO');
 
     res.json({
       success: true,
@@ -148,12 +152,14 @@ export const getMyContractorProfileController = async (
     }
 
     const result = await ProfileService.getProfile(userId, 'contractor');
+    console.log(result);
 
     res.json({
       success: true,
       message: 'Contractor profile retrieved successfully',
       data: result,
     });
+
   } catch (error: any) {
     res.status(404).json({
       success: false,
@@ -512,28 +518,26 @@ export const searchContractorsController = async (
     res.json({
       success: true,
       message: 'Contractors retrieved successfully',
-      data: {
-        contractors,
-        pagination: {
-          currentPage: pageNum,
-          totalPages,
-          totalContractors: total,
-          limit: limitNum,
-          hasNextPage: pageNum < totalPages,
-          hasPrevPage: pageNum > 1,
-        },
-        filters: {
-          general,
-          trade,
-          specialty,
-          subSpecialty,
-          city,
-          province,
-          role,
-          // minRating,
-          // isVerified,
-          search,
-        },
+      data: contractors,
+      pagination: {
+        currentPage: pageNum,
+        totalPages,
+        totalContractors: total,
+        limit: limitNum,
+        hasNextPage: pageNum < totalPages,
+        hasPrevPage: pageNum > 1,
+      },
+      filters: {
+        general,
+        trade,
+        specialty,
+        subSpecialty,
+        city,
+        province,
+        role,
+        // minRating,
+        // isVerified,
+        search,
       },
     });
   } catch (error: any) {
@@ -542,6 +546,54 @@ export const searchContractorsController = async (
       success: false,
       message: 'Failed to search contractors',
       errors: [error.message || 'Search operation failed'],
+    });
+  }
+};
+
+export const getContractorById = async (req: Request, res: Response) => {
+  try {
+    const contractorId = req.params.userId;
+
+    console.log(`Getting contractor by ID: ${contractorId}`);
+
+    // const test = await Contractor.findById('68666d457a8130305f9a96d1');
+
+    // res.status(200).json({
+    //   success: true,
+    //   message: 'Contractor retrieved successfully',
+    //   data: test,
+    // });
+
+    // return;
+
+    const contractor = await Contractor.findById(contractorId)
+      // .populate({
+      //   path: 'ratingIds',
+      //   populate: { path: 'clientId', select: 'firstName lastName' },
+      // })
+      .lean();
+
+    if (!contractor) {
+      res.status(404).json({
+        success: false,
+        message: 'Contractor not found',
+        errors: ['Contractor with the specified ID does not exist'],
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Contractor retrieved successfully',
+      data: contractor,
+    });
+    return;
+  } catch (err: any) {
+    console.error('Get contractor by ID error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve contractor',
+      errors: ['An unexpected error occured'],
     });
   }
 };

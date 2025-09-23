@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const baseURL = process.env.AUTH_SERVICE_URL || 'http://lcoalhost:3001';
+const baseURL = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 
 const makeRequest = async (method: string, endpoint: string, data?: any) => {
   try {
@@ -16,17 +16,17 @@ const makeRequest = async (method: string, endpoint: string, data?: any) => {
     });
     return response.data;
   } catch (error: any) {
-    console.error(`Auth service API error: ${error.message}`);
-    throw new Error(`Auth service communication failed: ${error.message}`);
+    console.error(`Auth service API error for ${method} ${endpoint}:`, error.response?.data || error.message);
+    throw new Error(`Auth service communication failed: ${error.response?.data?.message || error.message}`);
   }
 };
 
 const validateUser = async (userId: string) => {
-  return makeRequest('GET', `/auth/users/${userId}/validate`);
+  return makeRequest('GET', `/api/users/${userId}/validate`);
 };
 
 const getUserInfo = async (userId: string) => {
-  return makeRequest('GET', `/auth/users/${userId}`);
+  return makeRequest('GET', `/api/users/${userId}`);
 };
 
 export const AuthServiceClient = {

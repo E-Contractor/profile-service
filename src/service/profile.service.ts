@@ -1,8 +1,9 @@
-import { AuthServiceClient } from '@/clients/AuthServiceClient';
-import { Client } from '@/models/Client';
-import { Contractor } from '@/models/Contractor';
-import { ClientDocument, ContractorDocument } from '@/types';
-import { calculateCompletionPercentage, getMissingFields } from '@/utils';
+import { AuthServiceClient } from '../clients/AuthServiceClient';
+import { Client } from '../models/Client';
+import { Contractor } from '../models/Contractor';
+import { Opportunity } from '../models/Opportunity';
+import { ClientDocument, ContractorDocument } from '../types';
+import { calculateCompletionPercentage, getMissingFields } from '../utils';
 
 type Role = 'client' | 'contractor';
 
@@ -61,7 +62,7 @@ export const createContractorProfile = async (data: {
   businessEmail?: string;
   address?: any;
   generalProjects?: string[];
-  tradeProjects?: any[];
+  tradeProjects?: string[];
   description?: string;
   website?: string;
   emergencyContact?: any;
@@ -84,14 +85,14 @@ export const createContractorProfile = async (data: {
       }
     }
 
-    const contractor = await Contractor.create({
+    const contractorData = {
       userId: data.userId,
       firstName: data.firstName,
       lastName: data.lastName,
+      contractorRole: data.contractorRole,
       companyName: data.companyName.trim(),
       licenseNumber: data.licenseNumber?.trim(),
       yearsOfExperience: data.yearsOfExperience || 0,
-      contractorRole: data.contractorRole,
       phone: data.phone?.trim(),
       businessEmail: data.businessEmail,
       address: data.address || {
@@ -101,8 +102,12 @@ export const createContractorProfile = async (data: {
         ziPCode: '',
         country: 'Philippines',
       },
-      generalProjects: data.generalProjects || [],
-      tradeProjects: data.tradeProjects || [],
+      generalProjects: Array.isArray(data.generalProjects)
+        ? data.generalProjects
+        : [],
+      tradeProjects: Array.isArray(data.tradeProjects)
+        ? data.tradeProjects
+        : [],
       description: data.description,
       website: data.website,
       emergencyContact: data.emergencyContact,
@@ -112,7 +117,21 @@ export const createContractorProfile = async (data: {
         licenseDocument: '',
         taxDocument: '',
       },
+    };
+
+    console.log('About to create contractor with data:', {
+      generalProjects: contractorData.generalProjects,
+      tradeProjects: contractorData.tradeProjects,
     });
+
+    const contractor = await Contractor.create(contractorData);
+
+    console.log('Created contractor result:', {
+      generalProjects: contractor.generalProjects,
+      tradeProjects: contractor.tradeProjects,
+      contractorRole: contractor.contractorRole,
+    });
+
     return contractor;
   } catch (error: any) {
     throw new Error(`Contractor profile creation failed: ${error.message}`);
@@ -138,7 +157,15 @@ export const getProfile = async (userId: string, role: string) => {
       throw new Error('Profile not found');
     }
 
-    return result;
+    const opportunities = await Opportunity.find({ userId });
+
+    const profile = {
+      ...result.toObject(),
+      opportunities,
+    };
+
+    // return result;
+    return profile;
   } catch (error: any) {
     throw new Error(`Get profile failed: ${error.message}`);
   }

@@ -1,15 +1,12 @@
 import mongoose, { model, Schema } from 'mongoose';
-import bcrypt from 'bcrypt';
 
-import { ClientDocument } from '@/types';
+import { ClientDocument } from '../types';
 
 const ClientSchema = new mongoose.Schema<ClientDocument>(
   {
     userId: {
       type: Schema.Types.ObjectId,
       required: true,
-      unique: true, // One client profile per user
-      index: true,
     },
 
     // Personal Info
@@ -59,20 +56,6 @@ const ClientSchema = new mongoose.Schema<ClientDocument>(
 ClientSchema.index({ userId: 1 }, { unique: true });
 ClientSchema.index({ firstName: 1, lastName: 1 });
 ClientSchema.index({ 'address.city': 1, 'address.province': 1 });
-
-ClientSchema.pre('save', async function (next) {
-  if (this.isNew) {
-    const User = this.db.model('User');
-    const user = await User.findById(this.userId);
-
-    if (!user) throw new Error('User not found');
-
-    if (user.role !== 'client')
-      throw new Error('User must have client role to create client profile');
-  }
-  
-  next();
-});
 
 // Pre-save middleware
 ClientSchema.pre('save', function (next) {

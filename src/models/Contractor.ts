@@ -1,14 +1,12 @@
 // src/models/Contractor.ts
 import mongoose, { Schema } from 'mongoose';
-import { ContractorDocument } from '@/types';
+import { ContractorDocument } from '../types';
 
 const ContractorSchema = new mongoose.Schema<ContractorDocument>(
   {
     userId: {
       type: Schema.Types.ObjectId,
       required: true,
-      unique: true, // One contractor profile per user
-      index: true,
     },
 
     // Personal Info
@@ -149,7 +147,9 @@ ContractorSchema.index({ 'ratingStats.averageRating': -1 });
 
 // Virtuals
 ContractorSchema.virtual('fullName').get(function () {
-  return `${this.firstName} ${this.lastName}`;
+  const firstName = this.firstName || '';
+  const lastName = this.lastName || '';
+  return `${firstName} ${lastName}`.trim() || this.companyName || 'N/A';
 });
 
 // Pre-save middleware
@@ -194,13 +194,13 @@ ContractorSchema.pre('save', function (next) {
 // });
 
 // Virtual for contractor's full email (businessEmail or user email)
-ContractorSchema.virtual('email').get(async function () {
-  if (this.businessEmail) return this.businessEmail;
+// ContractorSchema.virtual('email').get(async function () {
+//   if (this.businessEmail) return this.businessEmail;
 
-  const User = this.db.model('User');
-  const user = await User.findById(this.userId);
-  return user?.email;
-});
+//   const User = this.db.model('User');
+//   const user = await User.findById(this.userId);
+//   return user?.email;
+// });
 
 // Static method to find contractors by trade
 ContractorSchema.statics.findByTrade = function (tradeName: string) {

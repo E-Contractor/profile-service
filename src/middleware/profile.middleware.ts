@@ -1,50 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt, { decode } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { error } from 'console';
 
-// dotenv.config();
-
-// interface JwtPayload {
-//   sub: string;
-//   exp: number;
-//   iat: number;
-// }
-
-// export const authMiddleware = (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ) => {
-//   try {
-//     const authHeader = req.headers.authorization;
-
-//     if (process.env.NODE_ENV == 'dev')
-//       console.log('Authorization Header:', authHeader);
-
-//     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-//       res.status(401).json({ message: 'No token provided' });
-//       return;
-//     }
-
-//     const token = authHeader.split(' ')[1];
-//     const secret = process.env.JWT_SECRET;
-
-//     if (!secret) throw new Error('JWT_SECRET is not set');
-
-//     try {
-//       const decoded = jwt.verify(token, secret as string) as JwtPayload;
-//       req.userId = decoded.sub;
-//       next();
-//     } catch (err) {
-//       res.status(401).json({ message: 'Invalid or expired token' });
-//       return;
-//     }
-//   } catch (err) {
-//     console.error('JWT Verification Error:', error);
-//     return res.sendStatus(401);
-//   }
-// };
+dotenv.config();
 
 export const serviceAuthMiddleware = (
   req: Request,
