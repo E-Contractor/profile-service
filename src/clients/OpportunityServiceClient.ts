@@ -25,6 +25,6 @@ const getOpportunityByUser = async (userId: string) => {
   return makeRequest('GET', `/api/opportunities/user/${userId}`);
 }
 
-export const AuthServiceClient = {
+export const OpportunityServiceClient = {
   getOpportunityByUser
 };
