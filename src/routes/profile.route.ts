@@ -18,6 +18,8 @@ router.post(
   serviceAuthMiddleware,
   ProfileController.createContractorProfileController
 );
+
+// THIS IS USED BY AUTH-SERVICE TO VALIDATE USER AND FETCH PROFILE
 router.get(
   '/profiles/:role/:userId',
   serviceAuthMiddleware,
@@ -69,7 +71,7 @@ router.get(
   ProfileController.searchContractorsController
 );
 
-router.get('/contractor/:userId', ProfileController.getContractorById);
+router.get('/contractor/:id', ProfileController.getContractorById);
 
 // Profile completion route
 router.get(

@@ -2,6 +2,11 @@ import { Request, Response } from 'express';
 
 import * as ProfileService from '../service/profile.service';
 import { Contractor } from '../models/Contractor';
+import { BidServiceClient } from '../clients/BidServiceClient';
+
+interface AuthRequest extends Request {
+  user?: any;
+}
 
 // ===== SERVICE-TO-SERVICE CONTROLLERS =====
 export const createClientProfileController = async (
@@ -54,12 +59,15 @@ export const getProfileController = async (req: Request, res: Response) => {
     const { userId, role } = req.params;
     console.log('Getting profile for userId:', userId, 'role:', role);
     const profile = await ProfileService.getProfile(userId, role);
+    // const bid = await BidServiceClient.getBidByUser(userId);
+
     console.log('Profile found:', profile ? 'YES' : 'NO');
 
     res.json({
       success: true,
       message: `${role} profile retrieved successfully`,
       data: profile,
+      // bid
     });
   } catch (error: any) {
     res.status(404).json({
@@ -104,7 +112,7 @@ export const updateUserStatusController = async (
 
 // ===== AUTHENTICATED USER CONTROLLERS =====
 export const getMyClientProfileController = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ) => {
   try {
@@ -136,7 +144,7 @@ export const getMyClientProfileController = async (
 };
 
 export const getMyContractorProfileController = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ) => {
   try {
@@ -152,14 +160,12 @@ export const getMyContractorProfileController = async (
     }
 
     const result = await ProfileService.getProfile(userId, 'contractor');
-    console.log(result);
 
-    res.json({
+    res.status(200).json({
       success: true,
       message: 'Contractor profile retrieved successfully',
       data: result,
     });
-
   } catch (error: any) {
     res.status(404).json({
       success: false,
@@ -170,7 +176,7 @@ export const getMyContractorProfileController = async (
 };
 
 export const updateClientProfileController = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ) => {
   try {
@@ -220,7 +226,7 @@ export const updateClientProfileController = async (
 };
 
 export const updateContractorProfileController = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ) => {
   try {
@@ -275,7 +281,7 @@ export const updateContractorProfileController = async (
 // ===== PROFILE COMPLETION CONTROLLERS =====
 
 export const getClientCompletionController = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ) => {
   try {
@@ -310,7 +316,7 @@ export const getClientCompletionController = async (
 
 // Get contractor completion (authenticated user)
 export const getContractorCompletionController = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ) => {
   try {
@@ -552,7 +558,7 @@ export const searchContractorsController = async (
 
 export const getContractorById = async (req: Request, res: Response) => {
   try {
-    const contractorId = req.params.userId;
+    const contractorId = req.params.id;
 
     console.log(`Getting contractor by ID: ${contractorId}`);
 
@@ -582,12 +588,13 @@ export const getContractorById = async (req: Request, res: Response) => {
       return;
     }
 
-    res.status(200).json({
-      success: true,
-      message: 'Contractor retrieved successfully',
-      data: contractor,
-    });
-    return;
+    // res.status(200).json({
+    //   success: true,
+    //   message: 'Contractor retrieved successfully',
+    //   data: contractor,
+    // });
+
+    res.status(200).json(contractor);
   } catch (err: any) {
     console.error('Get contractor by ID error:', err);
     res.status(500).json({

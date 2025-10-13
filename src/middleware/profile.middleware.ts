@@ -4,8 +4,12 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+interface AuthRequest extends Request {
+  user?: any;
+}
+
 export const serviceAuthMiddleware = (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ) => {
@@ -24,7 +28,7 @@ export const serviceAuthMiddleware = (
 };
 
 export const authMiddleware = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ) => {

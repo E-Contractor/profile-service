@@ -1,4 +1,6 @@
 import { AuthServiceClient } from '../clients/AuthServiceClient';
+import { BidServiceClient } from '../clients/BidServiceClient';
+import { OpportunityServiceClient } from '../clients/OpportunityServiceClient';
 import { Client } from '../models/Client';
 import { Contractor } from '../models/Contractor';
 import { Opportunity } from '../models/Opportunity';
@@ -142,26 +144,32 @@ export const getProfile = async (userId: string, role: string) => {
   try {
     let result;
     if (role === 'client') {
-      result = await Client.findOne({ userId }).populate(
-        'userId',
-        'email status isEmailVerified lastLogin'
-      );
+      result = await Client.findOne({ userId })
+        // .lean()
+        .populate('userId', 'email status isEmailVerified lastLogin');
     } else if (role === 'contractor') {
-      result = await Contractor.findOne({ userId }).populate(
-        'userId',
-        'email status isEmailVerified lastLogin'
-      );
+      result = await Contractor.findOne({ userId }).sort({ createdAt: -1 });
+        // .lean()
+        // .populate('userId', 'email status isEmailVerified lastLogin');
     }
 
     if (!result) {
       throw new Error('Profile not found');
     }
 
-    const opportunities = await Opportunity.find({ userId });
+    // const opportunities = await Opportunity.find({ userId });
+    const opportunities =
+      await OpportunityServiceClient.getOpportunityByUser(userId);
+
+    // console.log(opportunities);
+    console.log(result);
+    console.log('User ID:', userId);
+    const bid = await BidServiceClient.getBidByUser(userId);
 
     const profile = {
       ...result.toObject(),
       opportunities,
+      bid,
     };
 
     // return result;
