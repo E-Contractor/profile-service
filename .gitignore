@@ -26,12 +26,7 @@ coverage/
 
 # Environment variables
 .env
-.env.example
-.env.init
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
 
 # TypeScript
 *.tsbuildinfo
