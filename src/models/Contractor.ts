@@ -127,7 +127,13 @@ const ContractorSchema = new mongoose.Schema<ContractorDocument>(
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
+    toJSON: {
+      virtuals: true,
+      transform: function (_doc, ret: Record<string, any>) {
+        delete ret.__v;
+        return ret;
+      },
+    },
     toObject: { virtuals: true },
   }
 );
