@@ -1,9 +1,5 @@
-import { AuthServiceClient } from '../clients/AuthServiceClient';
-import { BidServiceClient } from '../clients/BidServiceClient';
-import { OpportunityServiceClient } from '../clients/OpportunityServiceClient';
 import { Client } from '../models/Client';
 import { Contractor } from '../models/Contractor';
-import { Opportunity } from '../models/Opportunity';
 import { ClientDocument, ContractorDocument } from '../types';
 import { calculateCompletionPercentage, getMissingFields } from '../utils';
 
@@ -24,11 +20,6 @@ export const createClientProfile = async (data: {
   emergencyContact?: any;
 }) => {
   try {
-    const userValidation = await AuthServiceClient.validateUser(data.userId);
-    if (userValidation.user.role !== 'client') {
-      throw new Error('User must have client role to create client profile');
-    }
-
     const result = await Client.create({
       userId: data.userId,
       firstName: data.firstName,
@@ -69,14 +60,8 @@ export const createContractorProfile = async (data: {
   website?: string;
   emergencyContact?: any;
 }) => {
+  // export const createContractorProfile = async (data: ContractorDocument) => {
   try {
-    const userValidation = await AuthServiceClient.validateUser(data.userId);
-    if (userValidation.user.role !== 'contractor') {
-      throw new Error(
-        'User must have contractor role to create contractor profile'
-      );
-    }
-
     if (data.licenseNumber) {
       const existingLicense = await Contractor.findOne({
         licenseNumber: data.licenseNumber.trim(),
@@ -140,40 +125,21 @@ export const createContractorProfile = async (data: {
   }
 };
 
-export const getProfile = async (userId: string, role: string) => {
+export const getProfile = async (userId: string, role?: string) => {
   try {
     let result;
+
     if (role === 'client') {
-      result = await Client.findOne({ userId })
-        // .lean()
-        .populate('userId', 'email status isEmailVerified lastLogin');
+      result = await Client.findOne({ userId }).lean();
     } else if (role === 'contractor') {
-      result = await Contractor.findOne({ userId }).sort({ createdAt: -1 });
-        // .lean()
-        // .populate('userId', 'email status isEmailVerified lastLogin');
+      result = await Contractor.findOne({ userId }).lean();
     }
 
     if (!result) {
       throw new Error('Profile not found');
     }
 
-    // const opportunities = await Opportunity.find({ userId });
-    const opportunities =
-      await OpportunityServiceClient.getOpportunityByUser(userId);
-
-    // console.log(opportunities);
-    console.log(result);
-    console.log('User ID:', userId);
-    const bid = await BidServiceClient.getBidByUser(userId);
-
-    const profile = {
-      ...result.toObject(),
-      opportunities,
-      bid,
-    };
-
-    // return result;
-    return profile;
+    return result;
   } catch (error: any) {
     throw new Error(`Get profile failed: ${error.message}`);
   }

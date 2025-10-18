@@ -1,14 +1,11 @@
 import { Request, Response } from 'express';
-
 import * as ProfileService from '../service/profile.service';
 import { Contractor } from '../models/Contractor';
-import { BidServiceClient } from '../clients/BidServiceClient';
 
 interface AuthRequest extends Request {
   user?: any;
 }
 
-// ===== SERVICE-TO-SERVICE CONTROLLERS =====
 export const createClientProfileController = async (
   req: Request,
   res: Response
@@ -35,9 +32,7 @@ export const createContractorProfileController = async (
   res: Response
 ) => {
   try {
-    console.log('Creating contractor profile with data:', req.body);
     const result = await ProfileService.createContractorProfile(req.body);
-    console.log(result);
 
     res.status(201).json({
       success: true,
@@ -57,23 +52,18 @@ export const createContractorProfileController = async (
 export const getProfileController = async (req: Request, res: Response) => {
   try {
     const { userId, role } = req.params;
-    console.log('Getting profile for userId:', userId, 'role:', role);
     const profile = await ProfileService.getProfile(userId, role);
-    // const bid = await BidServiceClient.getBidByUser(userId);
 
-    console.log('Profile found:', profile ? 'YES' : 'NO');
-
-    res.json({
+    res.status(200).json({
       success: true,
-      message: `${role} profile retrieved successfully`,
+      message: `${role.charAt(0).toUpperCase() + role.slice(1)} profile retrieved successfully`,
       data: profile,
-      // bid
     });
   } catch (error: any) {
     res.status(404).json({
       success: false,
-      message: error.message || 'Profile not found',
-      errors: [error.message || 'Profile not found'],
+      message: 'Failed to retrieve profile',
+      errors: ['Failed to retrieve profile'],
     });
   }
 };
@@ -106,71 +96,6 @@ export const updateUserStatusController = async (
       success: false,
       message: error.message || 'Failed to update user status',
       errors: [error.message || 'Status update failed'],
-    });
-  }
-};
-
-// ===== AUTHENTICATED USER CONTROLLERS =====
-export const getMyClientProfileController = async (
-  req: AuthRequest,
-  res: Response
-) => {
-  try {
-    const userId = req.user?._id || req.user?.sub;
-
-    if (!userId) {
-      res.status(401).json({
-        success: false,
-        message: 'User not authenticated',
-        errors: ['Authentication required'],
-      });
-      return;
-    }
-
-    const result = await ProfileService.getProfile(userId, 'client');
-
-    res.json({
-      success: true,
-      message: 'Client profile retrieved successfully',
-      data: result,
-    });
-  } catch (error: any) {
-    res.status(401).json({
-      success: false,
-      message: error.message || 'Client profile not found',
-      errors: [error.message || 'Profile not found'],
-    });
-  }
-};
-
-export const getMyContractorProfileController = async (
-  req: AuthRequest,
-  res: Response
-) => {
-  try {
-    const userId = req.user?._id || req.user?.sub;
-
-    if (!userId) {
-      res.status(401).json({
-        success: false,
-        message: 'User not authenticated',
-        errors: ['Authentication required'],
-      });
-      return;
-    }
-
-    const result = await ProfileService.getProfile(userId, 'contractor');
-
-    res.status(200).json({
-      success: true,
-      message: 'Contractor profile retrieved successfully',
-      data: result,
-    });
-  } catch (error: any) {
-    res.status(404).json({
-      success: false,
-      message: error.message || 'Contractor profile not found',
-      errors: [error.message || 'Profile not found'],
     });
   }
 };
@@ -552,55 +477,6 @@ export const searchContractorsController = async (
       success: false,
       message: 'Failed to search contractors',
       errors: [error.message || 'Search operation failed'],
-    });
-  }
-};
-
-export const getContractorById = async (req: Request, res: Response) => {
-  try {
-    const contractorId = req.params.id;
-
-    console.log(`Getting contractor by ID: ${contractorId}`);
-
-    // const test = await Contractor.findById('68666d457a8130305f9a96d1');
-
-    // res.status(200).json({
-    //   success: true,
-    //   message: 'Contractor retrieved successfully',
-    //   data: test,
-    // });
-
-    // return;
-
-    const contractor = await Contractor.findById(contractorId)
-      // .populate({
-      //   path: 'ratingIds',
-      //   populate: { path: 'clientId', select: 'firstName lastName' },
-      // })
-      .lean();
-
-    if (!contractor) {
-      res.status(404).json({
-        success: false,
-        message: 'Contractor not found',
-        errors: ['Contractor with the specified ID does not exist'],
-      });
-      return;
-    }
-
-    // res.status(200).json({
-    //   success: true,
-    //   message: 'Contractor retrieved successfully',
-    //   data: contractor,
-    // });
-
-    res.status(200).json(contractor);
-  } catch (err: any) {
-    console.error('Get contractor by ID error:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to retrieve contractor',
-      errors: ['An unexpected error occured'],
     });
   }
 };
