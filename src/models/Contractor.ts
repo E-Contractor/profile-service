@@ -8,18 +8,12 @@ const ContractorSchema = new mongoose.Schema<ContractorDocument>(
       type: Schema.Types.ObjectId,
       required: true,
     },
-
-    // Personal Info
     firstName: { type: String, trim: true, maxlength: 50 },
     lastName: { type: String, trim: true, maxlength: 50 },
-
-    // Company Info
     companyName: { type: String, trim: true, maxlength: 50 },
     licenseNumber: { type: String, trim: true },
     yearsOfExperience: { type: Number, min: 0 },
     pcab: { type: String, trim: true },
-
-    // Contact Info
     businessEmail: {
       type: String,
       lowercase: true,
@@ -48,8 +42,6 @@ const ContractorSchema = new mongoose.Schema<ContractorDocument>(
       zipCode: { type: String, trim: true },
       country: { type: String, default: 'Philippines' },
     },
-
-    // Business Details
     contractorRole: {
       type: String,
       required: true,
@@ -89,23 +81,17 @@ const ContractorSchema = new mongoose.Schema<ContractorDocument>(
         ],
       },
     ],
-
-    // Performance Metrics
     ratingStats: {
       averageRating: { type: Number, min: 0, max: 5 },
       totalRatings: { type: Number, default: 0, min: 0 },
       lastUpdated: { type: Date },
     },
-
-    // Verification & Status
     isVerified: { type: Boolean, default: false },
     verificationDocuments: {
       governmentDocument: { type: String },
       licenseDocument: { type: String },
       taxDocument: { type: String },
     },
-
-    // Profile
     profileImage: { type: String },
     description: { type: String, maxlength: 1000 },
     website: {
@@ -115,10 +101,7 @@ const ContractorSchema = new mongoose.Schema<ContractorDocument>(
       },
       message: 'Website must be a valid URL',
     },
-
     isProfileComplete: { type: Boolean, default: false },
-
-    //Business Operations
     emergencyContact: {
       name: { type: String, trim: true },
       phone: { type: String, trim: true },
@@ -134,7 +117,13 @@ const ContractorSchema = new mongoose.Schema<ContractorDocument>(
         return ret;
       },
     },
-    toObject: { virtuals: true },
+    toObject: {
+      virtuals: true,
+      transform: function (_doc, ret: Record<string, any>) {
+        delete ret.__v;
+        return ret;
+      },
+    },
   }
 );
 

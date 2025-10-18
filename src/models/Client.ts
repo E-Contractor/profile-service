@@ -1,4 +1,4 @@
-import mongoose, { model, Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 import { ClientDocument } from '../types';
 
@@ -36,6 +36,7 @@ const ClientSchema = new mongoose.Schema<ClientDocument>(
       default: 'email',
     },
     occupation: { type: String },
+    description: { type: String },
     emergencyContact: {
       name: { type: String, trim: true },
       phone: { type: String, trim: true },
@@ -48,8 +49,20 @@ const ClientSchema = new mongoose.Schema<ClientDocument>(
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
+    toJSON: {
+      virtuals: true,
+      transform: function (_doc, ret: Record<string, any>) {
+        delete ret.__v;
+        return ret;
+      },
+    },
+    toObject: {
+      virtuals: true,
+      transform: function (_doc, ret: Record<string, any>) {
+        delete ret.__v;
+        return ret;
+      },
+    },
   }
 );
 
