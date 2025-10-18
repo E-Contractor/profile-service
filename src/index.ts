@@ -26,10 +26,14 @@ app.use(
 );
 
 app.get('/', (req: Request, res: Response) => {
-  res.send('Hello World!');
+  res.json({
+    success: true,
+    message: 'Profile Service API',
+    version: '1.0.0',
+  });
 });
 
-app.use('/api', router);
+app.use('/api/profiles', router);
 
 const startServer = async () => {
   await connectDB();
