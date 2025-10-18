@@ -34,6 +34,7 @@ export interface ClientDocument extends Document {
   profileImage?: string;
   preferredContactMethod: 'email' | 'phone' | 'both';
   occupation?: string;
+  description?: string;
 
   // Emergency Contact
   emergencyContact?: EmergencyContact;
@@ -51,15 +52,14 @@ export interface ClientDocument extends Document {
 export interface ContractorDocument extends Document {
   _id: Types.ObjectId;
   userId: Types.ObjectId; // Reference to User from auth-service
-  accountType: string;
 
   // Personal Information
   firstName?: string;
   lastName?: string;
 
   // Company Information
-  companyName?: string;
-  licenseNumber?: string;
+  companyName: string;
+  licenseNumber: string;
   yearsOfExperience: number;
   pcab?: string;
 
@@ -120,6 +120,59 @@ type Specialty = string[] | Subspecialty[];
 interface Trade {
   trade: string;
   specialties: Specialty;
+}
+
+export interface RegisterUser {
+  // userId: string;
+  email: string;
+  password: string;
+  role: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+export interface RegisterClientRequest extends RegisterUser {
+  userId: string;
+}
+
+export interface RegisterContractorRequest extends RegisterUser {
+  userId: string;
+  companyName: string;
+  contractorRole: 'general' | 'trade' | 'both';
+  licenserNumber: string;
+  yearsOfExperience: number;
+  pcab: string;
+  phone: string;
+  businessEmail: string;
+  address: {
+    street: string;
+    city: string;
+    province: string;
+    zipCode: string;
+    country: string;
+  };
+  generalProjects: string[];
+  tradeProjects: {
+    trade: string;
+    specialties: {
+      specialty: string;
+      subspecialty: string[];
+    }[];
+  }[];
+  ratingStats: {
+    averageRating: number;
+    totalRatings: number;
+    lastUpdated: Date;
+  };
+  isVerified: boolean;
+  verificationDocuments: {
+    governmentDocument?: string;
+    licenseDocument?: string; // File path/URL
+    taxDocument?: string;
+  };
+  profileImage: string;
+  description: string;
+  website: string;
 }
 
 export interface OpportunityDocument extends Document {
