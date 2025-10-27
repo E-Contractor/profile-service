@@ -68,6 +68,37 @@ export const getProfileController = async (req: Request, res: Response) => {
   }
 };
 
+export const getMeController = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user._id;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'User not authenticated',
+        errors: ['Authentication required'],
+      });
+      return;
+    }
+
+    const role = req.user.role;
+
+    const profile = await ProfileService.getProfile(userId, role);
+
+    res.status(200).json({
+      success: true,
+      message: `${role.charAt(0).toUpperCase() + role.slice(1)} profile retrieved successfully`,
+      data: profile,
+    });
+  } catch (error: any) {
+    res.status(404).json({
+      success: false,
+      message: 'Failed to retrieve profile',
+      errors: ['Failed to retrieve profile'],
+    });
+  }
+};
+
 export const updateUserStatusController = async (
   req: Request,
   res: Response
@@ -155,7 +186,7 @@ export const updateContractorProfileController = async (
   res: Response
 ) => {
   try {
-    const userId = req.user?._id || req.user?.sub || req.params.userId;
+    const userId = req.user._id;
 
     if (!userId) {
       res.status(401).json({
@@ -312,12 +343,22 @@ export const getCompletionController = async (req: Request, res: Response) => {
   }
 };
 
-// ===== PUBLIC SEARCH CONTROLLERS =====
 export const searchContractorsController = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ) => {
   try {
+    const userId = req.user._id;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'User not authenticated',
+        errors: ['Authentication required'],
+      });
+      return;
+    }
+
     const {
       general,
       trade,

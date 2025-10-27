@@ -43,24 +43,24 @@ export const createClientProfile = async (data: {
   }
 };
 
-export const createContractorProfile = async (data: {
-  userId: string;
-  companyName: string;
-  firstName?: string;
-  lastName?: string;
-  licenseNumber?: string;
-  yearsOfExperience?: number;
-  contractorRole?: 'general' | 'trade' | 'both';
-  phone?: string;
-  businessEmail?: string;
-  address?: any;
-  generalProjects?: string[];
-  tradeProjects?: string[];
-  description?: string;
-  website?: string;
-  emergencyContact?: any;
-}) => {
-  // export const createContractorProfile = async (data: ContractorDocument) => {
+// export const createContractorProfile = async (data: {
+//   userId: string;
+//   companyName: string;
+//   firstName?: string;
+//   lastName?: string;
+//   licenseNumber?: string;
+//   yearsOfExperience?: number;
+//   contractorRole?: 'general' | 'trade' | 'both';
+//   phone?: string;
+//   businessEmail?: string;
+//   address?: any;
+//   generalProjects?: string[];
+//   tradeProjects?: string[];
+//   description?: string;
+//   website?: string;
+//   emergencyContact?: any;
+// }) => {
+export const createContractorProfile = async (data: ContractorDocument) => {
   try {
     if (data.licenseNumber) {
       const existingLicense = await Contractor.findOne({
@@ -132,6 +132,7 @@ export const getProfile = async (userId: string, role?: string) => {
     if (role === 'client') {
       result = await Client.findOne({ userId }).lean();
     } else if (role === 'contractor') {
+      // result = await Contractor.findById({ userId }).lean();
       result = await Contractor.findOne({ userId }).lean();
     }
 

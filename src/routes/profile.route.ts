@@ -14,10 +14,29 @@ router.get(
 );
 
 router.get(
+  '/me',
+  authMiddleware,
+  ProfileController.getMeController
+);
+
+router.patch(
+  '/contractor',
+  authMiddleware,
+  ProfileController.updateContractorProfileController
+);
+router.get(
+  '/me/contractor/status',
+  authMiddleware,
+  ProfileController.getContractorCompletionController
+);
+
+router.get(
   '/:role/:userId',
   authMiddleware,
   ProfileController.getProfileController
 );
+
+
 // router.put(
 //   '/user/:userId/status',
 //   serviceAuthMiddleware,
@@ -47,16 +66,7 @@ router.get(
 //   authMiddleware,
 //   ProfileController.getMyContractorProfileController
 // );
-router.patch(
-  '/me/contractor',
-  authMiddleware,
-  ProfileController.updateContractorProfileController
-);
-router.get(
-  '/me/contractor/status',
-  authMiddleware,
-  ProfileController.getContractorCompletionController
-);
+
 
 // Profile completion route
 // router.get(
