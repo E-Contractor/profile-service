@@ -131,6 +131,85 @@ export const updateUserStatusController = async (
   }
 };
 
+export const updateMeController = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const userId = req.user?._id || req.user?.sub;
+    const role = req.user?.role;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'User not authenticated',
+        errors: ['Authentication required'],
+      });
+      return;
+    }
+
+    if (!role || !['client', 'contractor'].includes(role)) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid user role',
+        errors: ['User role must be either client or contractor'],
+      });
+      return;
+    }
+
+    // Role-specific validation
+    if (role === 'client') {
+      const { firstName, lastName } = req.body;
+      if (
+        (firstName !== undefined && !firstName.trim()) ||
+        (lastName !== undefined && !lastName.trim())
+      ) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid input data',
+          errors: ['First name and last name cannot be empty'],
+        });
+        return;
+      }
+    }
+
+    if (role === 'contractor' && req.body.licenseNumber) {
+      const existingLicense = await Contractor.findOne({
+        licenseNumber: req.body.licenseNumber,
+        userId: { $ne: userId },
+      });
+
+      if (existingLicense) {
+        res.status(409).json({
+          success: false,
+          message: 'License number already exists',
+          errors: ['A contractor with this license number already exists'],
+        });
+        return;
+      }
+    }
+
+    const result = await ProfileService.updateProfile(
+      userId,
+      role,
+      req.body
+    );
+
+    res.json({
+      success: true,
+      message: `${role.charAt(0).toUpperCase() + role.slice(1)} profile updated successfully`,
+      data: result,
+    });
+  } catch (error: any) {
+    console.error('Update profile error:', error);
+    res.status(400).json({
+      success: false,
+      message: error.message || 'Failed to update profile',
+      errors: [error.message || 'Profile update failed'],
+    });
+  }
+};
+
 export const updateClientProfileController = async (
   req: AuthRequest,
   res: Response
@@ -366,6 +445,7 @@ export const searchContractorsController = async (
       subSpecialty,
       city,
       province,
+      pcab,
       // contractorRole,
       role,
       minRating,
@@ -410,6 +490,11 @@ export const searchContractorsController = async (
 
     if (province) {
       filters['address.province'] = new RegExp(province as string, 'i');
+    }
+
+    if (pcab) {
+      const pcabValues = Array.isArray(pcab) ? pcab : [pcab];
+      filters.pcab = { $in: pcabValues };
     }
 
     // if (
@@ -506,6 +591,7 @@ export const searchContractorsController = async (
         subSpecialty,
         city,
         province,
+        pcab,
         role,
         // minRating,
         // isVerified,

@@ -20,6 +20,18 @@ router.get(
 );
 
 router.patch(
+  '/me',
+  authMiddleware,
+  ProfileController.updateMeController
+);
+
+router.patch(
+  '/client',
+  authMiddleware,
+  ProfileController.updateClientProfileController
+);
+
+router.patch(
   '/contractor',
   authMiddleware,
   ProfileController.updateContractorProfileController
@@ -35,44 +47,5 @@ router.get(
   authMiddleware,
   ProfileController.getProfileController
 );
-
-
-// router.put(
-//   '/user/:userId/status',
-//   serviceAuthMiddleware,
-//   ProfileController.updateUserStatusController
-// );
-
-// Client routes (protected by JWT)
-// router.get(
-//   '/me/client',
-//   authMiddleware,
-//   ProfileController.getMyClientProfileController
-// );
-// router.patch(
-//   '/me/client',
-//   authMiddleware,
-//   ProfileController.updateClientProfileController
-// );
-// router.get(
-//   '/me/client/status',
-//   authMiddleware,
-//   ProfileController.getClientCompletionController
-// );
-
-// Contractor routes (protected by JWT)
-// router.get(
-//   '/me/contractor',
-//   authMiddleware,
-//   ProfileController.getMyContractorProfileController
-// );
-
-
-// Profile completion route
-// router.get(
-//   '/completion/:userId/:role',
-//   serviceAuthMiddleware,
-//   ProfileController.getCompletionController
-// );
 
 export default router;
