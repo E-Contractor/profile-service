@@ -68,15 +68,15 @@ const ContractorSchema = new mongoose.Schema<ContractorDocument>(
         },
         specialties: [
           {
-            type: String,
-            validate: {
-              validator: function (v: any) {
-                if (typeof v === 'string') return true;
-                return false;
-              },
-              message:
-                'Specialty must be string with specialty and subcategories properties',
+            specialty: {
+              type: String,
+              required: true,
             },
+            subspecialty: [
+              {
+                type: String,
+              },
+            ],
           },
         ],
       },
@@ -199,22 +199,17 @@ ContractorSchema.pre('save', function (next) {
 
 // Static method to find contractors by trade
 ContractorSchema.statics.findByTrade = function (tradeName: string) {
-  return this.find({ 'trades.trade': tradeName });
+  return this.find({ 'tradeProjects.trade': tradeName });
 };
 
 ContractorSchema.statics.findBySpecialty = function (specialtyName: string) {
-  return this.find({
-    $or: [
-      { 'trades.specialties': specialtyName },
-      { 'trades.specialties.specialty': specialtyName },
-    ],
-  });
+  return this.find({ 'tradeProjects.specialties.specialty': specialtyName });
 };
 
 ContractorSchema.statics.findBySubcategory = function (
   subcategoryName: string
 ) {
-  return this.find({ 'trades.specialties.subcategories': subcategoryName });
+  return this.find({ 'tradeProjects.specialties.subspecialty': subcategoryName });
 };
 
 export const Contractor = mongoose.model<ContractorDocument>(

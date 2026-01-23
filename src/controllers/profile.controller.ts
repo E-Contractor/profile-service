@@ -446,8 +446,7 @@ export const searchContractorsController = async (
       city,
       province,
       pcab,
-      // contractorRole,
-      role,
+      role, // Frontend sends 'role' parameter for contractor role filtering
       minRating,
       isVerified,
       search, // For company name or description search
@@ -461,25 +460,31 @@ export const searchContractorsController = async (
     if (general) {
       const generalProjects = Array.isArray(general) ? general : [general];
       filters.generalProjects = { $all: generalProjects };
+      // Auto-filter to contractors with "general" or "both" role when filtering by general projects
+      // if (!role) {
+      //   filters.contractorRole = { $in: ['general', 'both'] };
+      // }
     }
 
     if (trade) {
       const trades = Array.isArray(trade) ? trade : [trade];
       filters['tradeProjects.trade'] = { $all: trades };
-      // filters['tradeProjects.trade'] = trade;
+      // Auto-filter to contractors with "trade" or "both" role when filtering by trade projects
+      // if (!role && !general) {
+      //   filters.contractorRole = { $in: ['trade', 'both'] };
+      // }
     }
 
     if (specialty) {
       const specialties = Array.isArray(specialty) ? specialty : [specialty];
-      filters['tradeProjects.specialties'] = { $all: specialties };
-      // filters['tradeProjects.specialties'] = { $in: [specialty] };
+      filters['tradeProjects.specialties.specialty'] = { $all: specialties };
     }
 
     if (subSpecialty) {
       const subSpecialties = Array.isArray(subSpecialty)
         ? subSpecialty
         : [subSpecialty];
-      filters['tradeProjects.specialties.subcategories'] = {
+      filters['tradeProjects.specialties.subspecialty'] = {
         $all: subSpecialties,
       };
     }
@@ -505,25 +510,38 @@ export const searchContractorsController = async (
     // }
 
     if (role) {
-      const roles = Array.isArray(role) ? role : [role];
-      const hasTradeFilters = trade || specialty || subSpecialty;
-      const hasGeneralFilters = general;
-      const roleFilters: any = [];
+      // Parse roles - frontend sends comma-separated string like "general,trade"
+      const rolesString = Array.isArray(role)
+        ? role.join(',')
+        : role as string;
+      const roles = rolesString.split(',').map(r => r.trim());
 
-      roles.forEach((selectedRole) => {
-        roleFilters.push(selectedRole);
+      console.log('=== CONTRACTOR ROLE FILTER DEBUG ===');
+      console.log('Raw role:', role);
+      console.log('Parsed roles:', roles);
 
-        if (selectedRole === 'trade' && hasTradeFilters)
-          roleFilters.push('both');
-        if (selectedRole === 'general' && hasGeneralFilters)
-          roleFilters.push('both');
-      });
+      const hasGeneralRole = roles.includes('general');
+      const hasTradeRole = roles.includes('trade');
 
-      const uniqueRoleFilters = [...new Set(roleFilters)];
-      filters.contractorRole = { $in: uniqueRoleFilters };
+      console.log('hasGeneralRole:', hasGeneralRole);
+      console.log('hasTradeRole:', hasTradeRole);
 
-      // filter.contractorRole = { $in: roles };
+      if (hasGeneralRole && hasTradeRole) {
+        // Both "general" AND "trade" selected → only show "both" role
+        filters.contractorRole = 'both';
+        console.log('Filter set to: both');
+      } else if (hasGeneralRole) {
+        // Only "general" selected → show "general" and "both"
+        filters.contractorRole = { $in: ['general', 'both'] };
+        console.log('Filter set to: general, both');
+      } else if (hasTradeRole) {
+        // Only "trade" selected → show "trade" and "both"
+        filters.contractorRole = { $in: ['trade', 'both'] };
+        console.log('Filter set to: trade, both');
+      }
     }
+
+    console.log('Final filters:', JSON.stringify(filters, null, 2));
 
     // if (minRating) {
     //   const rating = parseFloat(minRating as string);
