@@ -7,10 +7,25 @@ const router = express.Router();
 router.post('/client', ProfileController.createClientProfileController);
 router.post('/contractor', ProfileController.createContractorProfileController);
 
+// Public — no auth required (used by homepage for guests)
+router.get('/contractor/featured', ProfileController.getFeaturedContractorsController);
+
 router.get(
   '/contractor/search',
   authMiddleware,
   ProfileController.searchContractorsController
+);
+
+router.get(
+  '/contractor/search/pcab',
+  authMiddleware,
+  ProfileController.searchPcabContractorsController
+);
+
+router.get(
+  '/contractor/search/non-pcab',
+  authMiddleware,
+  ProfileController.searchNonPcabContractorsController
 );
 
 router.get(
@@ -41,6 +56,10 @@ router.get(
   authMiddleware,
   ProfileController.getContractorCompletionController
 );
+
+router.post('/me/portfolio', authMiddleware, ProfileController.addPortfolioItemController);
+router.patch('/me/portfolio/:itemId', authMiddleware, ProfileController.updatePortfolioItemController);
+router.delete('/me/portfolio/:itemId', authMiddleware, ProfileController.deletePortfolioItemController);
 
 router.get(
   '/:role/:userId',

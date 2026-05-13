@@ -446,7 +446,9 @@ export const searchContractorsController = async (
       city,
       province,
       pcab,
+      isPcab: isPcabQuery,
       role, // Frontend sends 'role' parameter for contractor role filtering
+      serviceType, // Filter by service type (design/build)
       minRating,
       isVerified,
       search, // For company name or description search
@@ -454,8 +456,28 @@ export const searchContractorsController = async (
       limit = '10',
     } = req.query;
 
+    // res.locals.isPcab is set by the pcab/non-pcab wrapper controllers
+    const isPcab = res.locals.isPcab || isPcabQuery;
+
     // Build search filters
     const filters: any = {};
+
+    // PCAB classification filter
+    // Handles both new data (with isPcab field) and old data (only has pcab string)
+    if (isPcab === 'true') {
+      // PCAB: explicitly marked OR old data with a pcab category value
+      if (!filters.$and) filters.$and = [];
+      filters.$and.push({
+        $or: [
+          { isPcab: true },
+          { isPcab: { $exists: false }, pcab: { $exists: true, $nin: [null, ''] } },
+        ],
+      });
+    } else if (isPcab === 'false') {
+      // Non-PCAB: not marked as PCAB AND pcab field is empty/missing
+      filters.isPcab = { $ne: true };
+      filters.pcab = { $in: [null, ''] };
+    }
 
     if (general) {
       const generalProjects = Array.isArray(general) ? general : [general];
@@ -516,32 +538,25 @@ export const searchContractorsController = async (
         : role as string;
       const roles = rolesString.split(',').map(r => r.trim());
 
-      console.log('=== CONTRACTOR ROLE FILTER DEBUG ===');
-      console.log('Raw role:', role);
-      console.log('Parsed roles:', roles);
-
       const hasGeneralRole = roles.includes('general');
       const hasTradeRole = roles.includes('trade');
-
-      console.log('hasGeneralRole:', hasGeneralRole);
-      console.log('hasTradeRole:', hasTradeRole);
 
       if (hasGeneralRole && hasTradeRole) {
         // Both "general" AND "trade" selected → only show "both" role
         filters.contractorRole = 'both';
-        console.log('Filter set to: both');
       } else if (hasGeneralRole) {
         // Only "general" selected → show "general" and "both"
         filters.contractorRole = { $in: ['general', 'both'] };
-        console.log('Filter set to: general, both');
       } else if (hasTradeRole) {
         // Only "trade" selected → show "trade" and "both"
         filters.contractorRole = { $in: ['trade', 'both'] };
-        console.log('Filter set to: trade, both');
       }
     }
 
-    console.log('Final filters:', JSON.stringify(filters, null, 2));
+    if (serviceType) {
+      const serviceTypes = Array.isArray(serviceType) ? serviceType : [serviceType];
+      filters.serviceType = { $all: serviceTypes };
+    }
 
     // if (minRating) {
     //   const rating = parseFloat(minRating as string);
@@ -556,12 +571,15 @@ export const searchContractorsController = async (
 
     // Text search in company name or description
     if (search) {
-      filters.$or = [
-        { companyName: new RegExp(search as string, 'i') },
-        { description: new RegExp(search as string, 'i') },
-        { firstName: new RegExp(search as string, 'i') },
-        { lastName: new RegExp(search as string, 'i') },
-      ];
+      if (!filters.$and) filters.$and = [];
+      filters.$and.push({
+        $or: [
+          { companyName: new RegExp(search as string, 'i') },
+          { description: new RegExp(search as string, 'i') },
+          { firstName: new RegExp(search as string, 'i') },
+          { lastName: new RegExp(search as string, 'i') },
+        ],
+      });
     }
 
     // Pagination
@@ -611,6 +629,7 @@ export const searchContractorsController = async (
         province,
         pcab,
         role,
+        serviceType,
         // minRating,
         // isVerified,
         search,
@@ -622,6 +641,53 @@ export const searchContractorsController = async (
       success: false,
       message: 'Failed to search contractors',
       errors: [error.message || 'Search operation failed'],
+    });
+  }
+};
+
+export const searchPcabContractorsController = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  res.locals.isPcab = 'true';
+  return searchContractorsController(req, res);
+};
+
+export const searchNonPcabContractorsController = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  res.locals.isPcab = 'false';
+  return searchContractorsController(req, res);
+};
+
+export const getFeaturedContractorsController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const limit = Math.min(10, Math.max(1, parseInt((req.query.limit as string) || '3')));
+    const contractors = await Contractor.find({})
+      .select('-verificationDocuments -emergencyContact')
+      .sort({
+        'ratingStats.averageRating': -1,
+        'ratingStats.totalRatings': -1,
+        createdAt: -1,
+      })
+      .limit(limit)
+      .lean();
+
+    res.json({
+      success: true,
+      message: 'Featured contractors retrieved successfully',
+      data: contractors,
+    });
+  } catch (error: any) {
+    console.error('Get featured contractors error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve featured contractors',
+      errors: [error.message || 'Retrieval failed'],
     });
   }
 };
@@ -666,5 +732,128 @@ export const getPublicContractorProfileController = async (
       message: 'Failed to retrieve contractor profile',
       errors: [error.message || 'Profile retrieval failed'],
     });
+  }
+};
+
+// ===== PORTFOLIO CONTROLLERS =====
+
+export const addPortfolioItemController = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const { title, description, location, completedAt, trade, specialty, images } = req.body;
+    if (!title?.trim()) {
+      return res.status(400).json({ success: false, message: 'Title is required' });
+    }
+
+    const contractor = await Contractor.findOne({ userId });
+    if (!contractor) {
+      return res.status(404).json({ success: false, message: 'Contractor profile not found' });
+    }
+
+    (contractor as any).portfolio.push({
+      title: title.trim(),
+      description,
+      location,
+      completedAt: completedAt ? new Date(completedAt) : undefined,
+      trade,
+      specialty,
+      images: images || [],
+    });
+
+    await contractor.save();
+    const added = (contractor as any).portfolio[(contractor as any).portfolio.length - 1];
+
+    return res.status(201).json({
+      success: true,
+      message: 'Portfolio item added successfully',
+      data: added,
+    });
+  } catch (error: any) {
+    console.error('addPortfolioItem error:', error);
+    return res.status(500).json({ success: false, message: error.message || 'Failed to add portfolio item' });
+  }
+};
+
+export const updatePortfolioItemController = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const { itemId } = req.params;
+    const contractor = await Contractor.findOne({ userId });
+    if (!contractor) {
+      return res.status(404).json({ success: false, message: 'Contractor profile not found' });
+    }
+
+    const item = (contractor as any).portfolio.id(itemId);
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Portfolio item not found' });
+    }
+
+    const { title, description, location, completedAt, trade, specialty, images } = req.body;
+    if (title !== undefined) item.title = title;
+    if (description !== undefined) item.description = description;
+    if (location !== undefined) item.location = location;
+    if (completedAt !== undefined) item.completedAt = completedAt ? new Date(completedAt) : undefined;
+    if (trade !== undefined) item.trade = trade;
+    if (specialty !== undefined) item.specialty = specialty;
+    if (images !== undefined) item.images = images;
+
+    await contractor.save();
+
+    return res.json({
+      success: true,
+      message: 'Portfolio item updated successfully',
+      data: item,
+    });
+  } catch (error: any) {
+    console.error('updatePortfolioItem error:', error);
+    return res.status(500).json({ success: false, message: error.message || 'Failed to update portfolio item' });
+  }
+};
+
+export const deletePortfolioItemController = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const { itemId } = req.params;
+    const contractor = await Contractor.findOne({ userId });
+    if (!contractor) {
+      return res.status(404).json({ success: false, message: 'Contractor profile not found' });
+    }
+
+    const item = (contractor as any).portfolio.id(itemId);
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Portfolio item not found' });
+    }
+
+    (contractor as any).portfolio.pull({ _id: itemId });
+    await contractor.save();
+
+    return res.json({
+      success: true,
+      message: 'Portfolio item deleted successfully',
+    });
+  } catch (error: any) {
+    console.error('deletePortfolioItem error:', error);
+    return res.status(500).json({ success: false, message: error.message || 'Failed to delete portfolio item' });
   }
 };

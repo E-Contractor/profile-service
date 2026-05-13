@@ -13,6 +13,7 @@ const ContractorSchema = new mongoose.Schema<ContractorDocument>(
     companyName: { type: String, trim: true, maxlength: 50 },
     licenseNumber: { type: String, trim: true },
     yearsOfExperience: { type: Number, min: 0 },
+    isPcab: { type: Boolean, default: false },
     pcab: { type: String, trim: true },
     businessEmail: {
       type: String,
@@ -28,12 +29,6 @@ const ContractorSchema = new mongoose.Schema<ContractorDocument>(
     phone: {
       type: String,
       trim: true,
-      validate: {
-        validator: function (v: string) {
-          return !v || /^[\+]?[1-9][\d]{0,15}$/.test(v);
-        },
-        message: 'Invalid phone number format',
-      },
     },
     address: {
       street: { type: String, trim: true },
@@ -46,6 +41,11 @@ const ContractorSchema = new mongoose.Schema<ContractorDocument>(
       type: String,
       required: true,
       enum: ['general', 'trade', 'both'],
+    },
+    serviceType: {
+      type: [String],
+      enum: ['design', 'build'],
+      default: [],
     },
     generalProjects: { type: [String] },
     tradeProjects: [
@@ -91,9 +91,30 @@ const ContractorSchema = new mongoose.Schema<ContractorDocument>(
       governmentDocument: { type: String },
       licenseDocument: { type: String },
       taxDocument: { type: String },
+      businessPermit: { type: String },
+      companyProfile: { type: String },
+      sec: { type: String },
+      birCertification: { type: String },
+      orSalesInvoice: { type: String },
+      pcabLicense: { type: String },
+      gis: { type: String },
     },
     profileImage: { type: String },
+    bannerImage: { type: String },
+    bannerImages: { type: [String], default: [] },
     description: { type: String, maxlength: 1000 },
+    portfolio: [
+      {
+        title: { type: String, required: true, trim: true, maxlength: 200 },
+        description: { type: String, trim: true, maxlength: 2000 },
+        location: { type: String, trim: true },
+        completedAt: { type: Date },
+        trade: { type: String },
+        specialty: { type: String },
+        images: { type: [String], default: [] },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
     website: {
       type: String,
       validator: function (v: string) {
@@ -132,6 +153,7 @@ ContractorSchema.index({ firstName: 1, lastName: 1 });
 ContractorSchema.index({ companyName: 1 });
 ContractorSchema.index({ licenseNumber: 1 }, { sparse: true });
 ContractorSchema.index({ contractorRole: 1 });
+ContractorSchema.index({ serviceType: 1 });
 ContractorSchema.index({ 'address.city': 1, 'address.province': 1 });
 ContractorSchema.index({ averageRating: -1 });
 ContractorSchema.index({ isVerified: 1 });

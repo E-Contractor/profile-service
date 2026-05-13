@@ -32,6 +32,7 @@ export interface ClientDocument extends Document {
   phone?: string;
   address?: Address;
   profileImage?: string;
+  bannerImages?: string[];
   preferredContactMethod: 'email' | 'phone' | 'both';
   occupation?: string;
   description?: string;
@@ -49,6 +50,18 @@ export interface ClientDocument extends Document {
   fullName: string;
 }
 
+export interface PortfolioItem {
+  _id?: Types.ObjectId;
+  title: string;
+  description?: string;
+  location?: string;
+  completedAt?: Date;
+  trade?: string;
+  specialty?: string;
+  images?: string[];
+  createdAt?: Date;
+}
+
 export interface ContractorDocument extends Document {
   _id: Types.ObjectId;
   userId: Types.ObjectId; // Reference to User from auth-service
@@ -61,6 +74,7 @@ export interface ContractorDocument extends Document {
   companyName: string;
   licenseNumber: string;
   yearsOfExperience: number;
+  isPcab?: boolean;
   pcab?: string;
 
   // Contract Information
@@ -70,6 +84,7 @@ export interface ContractorDocument extends Document {
 
   // Business Details
   contractorRole: 'general' | 'trade' | 'both';
+  serviceType: ('design' | 'build')[];
   generalProjects: string[];
   tradeProjects: Trade[];
 
@@ -86,11 +101,19 @@ export interface ContractorDocument extends Document {
     governmentDocument?: string;
     licenseDocument?: string; // File path/URL
     taxDocument?: string;
+    businessPermit?: string;
+    companyProfile?: string;
+    sec?: string;
+    birCertification?: string;
+    orSalesInvoice?: string;
+    pcabLicense?: string;
+    gis?: string;
   };
 
   // Profile
   profileImage?: string;
   description?: string;
+  portfolio?: PortfolioItem[];
   website?: string;
 
   // Profile completion
@@ -169,6 +192,13 @@ export interface RegisterContractorRequest extends RegisterUser {
     governmentDocument?: string;
     licenseDocument?: string; // File path/URL
     taxDocument?: string;
+    businessPermit?: string;
+    companyProfile?: string;
+    sec?: string;
+    birCertification?: string;
+    orSalesInvoice?: string;
+    pcabLicense?: string;
+    gis?: string;
   };
   profileImage: string;
   description: string;

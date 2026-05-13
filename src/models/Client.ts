@@ -15,12 +15,6 @@ const ClientSchema = new mongoose.Schema<ClientDocument>(
     phone: {
       type: String,
       trim: true,
-      validate: {
-        validator: function (v: string) {
-          return !v || /^[\+]?[1-9][\d]{0,15}$/.test(v);
-        },
-        message: 'Invalid phone number format',
-      },
     },
     address: {
       street: { type: String, trim: true },
@@ -30,6 +24,7 @@ const ClientSchema = new mongoose.Schema<ClientDocument>(
       country: { type: String, default: 'Philippines' },
     },
     profileImage: { type: String },
+    bannerImages: { type: [String], default: [] },
     preferredContactMethod: {
       type: String,
       enum: ['email', 'phone', 'both'],

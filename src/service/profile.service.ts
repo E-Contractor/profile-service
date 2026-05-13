@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Client } from '../models/Client';
 import { Contractor } from '../models/Contractor';
 import { ClientDocument, ContractorDocument } from '../types';
@@ -77,16 +78,19 @@ export const createContractorProfile = async (data: ContractorDocument) => {
       firstName: data.firstName,
       lastName: data.lastName,
       contractorRole: data.contractorRole,
+      serviceType: Array.isArray(data.serviceType) ? data.serviceType : [],
       companyName: data.companyName.trim(),
       licenseNumber: data.licenseNumber?.trim(),
       yearsOfExperience: data.yearsOfExperience || 0,
+      isPcab: data.isPcab || false,
+      pcab: data.isPcab ? data.pcab : '',
       phone: data.phone?.trim(),
       businessEmail: data.businessEmail,
       address: data.address || {
         street: '',
         city: '',
         province: '',
-        ziPCode: '',
+        zipCode: '',
         country: 'Philippines',
       },
       generalProjects: Array.isArray(data.generalProjects)
@@ -99,11 +103,7 @@ export const createContractorProfile = async (data: ContractorDocument) => {
       website: data.website,
       emergencyContact: data.emergencyContact,
       isVerified: false,
-      verificationDocuments: {
-        governmentDocument: '',
-        licenseDocument: '',
-        taxDocument: '',
-      },
+      verificationDocuments: data.verificationDocuments || {},
     };
 
     console.log('About to create contractor with data:', {
@@ -138,6 +138,21 @@ export const getProfile = async (userId: string, role?: string) => {
 
     if (!result) {
       throw new Error('Profile not found');
+    }
+
+    try {
+      const userDoc = await mongoose.connection.db
+        ?.collection('users')
+        .findOne(
+          { _id: new mongoose.Types.ObjectId(userId) },
+          { projection: { lastLogin: 1, lastActiveAt: 1 } }
+        );
+      (result as any).lastLogin = userDoc?.lastLogin ?? null;
+      (result as any).lastActiveAt = userDoc?.lastActiveAt ?? null;
+    } catch (err) {
+      console.warn('[profile.service] failed to attach lastActive', err);
+      (result as any).lastLogin = null;
+      (result as any).lastActiveAt = null;
     }
 
     return result;

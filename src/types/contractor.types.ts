@@ -6,8 +6,10 @@ interface Contractor {
   fullName: string; // Virtual field
   companyName: string;
   contractorRole: string;
+  serviceType: string[];
   licenseNumber: string;
   yearsOfExperience: number;
+  isPcab: boolean;
   pcab: string;
   businessEmail: string;
   phone: string;
@@ -37,9 +39,19 @@ interface Contractor {
     governmentDocument: string;
     licenseDocument: string; // File path/URL
     taxDocument: string;
+    businessPermit?: string;
+    companyProfile?: string;
+    sec?: string;
+    birCertification?: string;
+    orSalesInvoice?: string;
+    pcabLicense?: string;
+    gis?: string;
   };
   emergencyContact: { name: string; phone: string; relationship: string };
   images: string[]; // FileURL for images
+  profileImage: string;
+  bannerImage: string;
+  bannerImages: string[];
   description: string;
   website: string;
 }
