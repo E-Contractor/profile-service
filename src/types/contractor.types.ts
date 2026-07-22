@@ -3,7 +3,7 @@ import { Types, Document } from 'mongoose';
 interface Contractor {
   firstName: string;
   lastName: string;
-  fullName: string; // Virtual field
+  fullName: string;
   companyName: string;
   contractorRole: string;
   serviceType: string[];
@@ -37,7 +37,7 @@ interface Contractor {
   isVerified: boolean;
   verificationDocuments: {
     governmentDocument: string;
-    licenseDocument: string; // File path/URL
+    licenseDocument: string;
     taxDocument: string;
     businessPermit?: string;
     companyProfile?: string;
@@ -48,7 +48,7 @@ interface Contractor {
     gis?: string;
   };
   emergencyContact: { name: string; phone: string; relationship: string };
-  images: string[]; // FileURL for images
+  images: string[];
   profileImage: string;
   bannerImage: string;
   bannerImages: string[];

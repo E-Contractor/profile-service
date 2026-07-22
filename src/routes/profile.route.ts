@@ -1,14 +1,20 @@
 import express from 'express';
-import { authMiddleware } from '../middleware/profile.middleware';
+import { authMiddleware, serviceAuthMiddleware } from '../middleware/profile.middleware';
 import * as ProfileController from '../controllers/profile.controller';
 
 const router = express.Router();
 
+router.post(
+  '/internal/match-contractors',
+  serviceAuthMiddleware,
+  ProfileController.matchContractorsController
+);
+
 router.post('/client', ProfileController.createClientProfileController);
 router.post('/contractor', ProfileController.createContractorProfileController);
 
-// Public — no auth required (used by homepage for guests)
 router.get('/contractor/featured', ProfileController.getFeaturedContractorsController);
+router.get('/stats/breakdown', ProfileController.getStatsBreakdownController);
 
 router.get(
   '/contractor/search',
@@ -57,9 +63,16 @@ router.get(
   ProfileController.getContractorCompletionController
 );
 
+router.get('/me/portfolio', authMiddleware, ProfileController.getMyPortfolioController);
 router.post('/me/portfolio', authMiddleware, ProfileController.addPortfolioItemController);
 router.patch('/me/portfolio/:itemId', authMiddleware, ProfileController.updatePortfolioItemController);
 router.delete('/me/portfolio/:itemId', authMiddleware, ProfileController.deletePortfolioItemController);
+
+router.get(
+  '/contractor/:userId/portfolio',
+  authMiddleware,
+  ProfileController.getPortfolioByUserIdController
+);
 
 router.get(
   '/:role/:userId',

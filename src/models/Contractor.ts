@@ -1,4 +1,4 @@
-// src/models/Contractor.ts
+
 import mongoose, { Schema } from 'mongoose';
 import { ContractorDocument } from '../types';
 
@@ -102,13 +102,28 @@ const ContractorSchema = new mongoose.Schema<ContractorDocument>(
     profileImage: { type: String },
     bannerImage: { type: String },
     bannerImages: { type: [String], default: [] },
-    description: { type: String, maxlength: 1000 },
+    description: { type: String, maxlength: 1500 },
     portfolio: [
       {
         title: { type: String, required: true, trim: true, maxlength: 200 },
         description: { type: String, trim: true, maxlength: 2000 },
         location: { type: String, trim: true },
+        projectType: { type: String },
+        status: {
+          type: String,
+          enum: ['completed', 'ongoing'],
+          default: 'ongoing',
+        },
         completedAt: { type: Date },
+
+        tradeTags: [
+          {
+            trade: { type: String },
+            specialty: { type: String },
+            image: { type: String },
+          },
+        ],
+
         trade: { type: String },
         specialty: { type: String },
         images: { type: [String], default: [] },
@@ -162,16 +177,15 @@ ContractorSchema.index({ generalProjects: 1 });
 ContractorSchema.index({ tradeProjects: 1 });
 ContractorSchema.index({ 'ratingStats.averageRating': -1 });
 
-// Virtuals
 ContractorSchema.virtual('fullName').get(function () {
   const firstName = this.firstName || '';
   const lastName = this.lastName || '';
   return `${firstName} ${lastName}`.trim() || this.companyName || 'N/A';
 });
 
-// Pre-save middleware
+
 ContractorSchema.pre('save', function (next) {
-  // Check if profile is complete
+  
   this.isProfileComplete = !!(
     this.firstName &&
     this.lastName &&
@@ -189,37 +203,37 @@ ContractorSchema.pre('save', function (next) {
   next();
 });
 
-// Update average rating when ratings change
-// ContractorSchema.pre('save', async function (next) {
-//   if (
-//     this.ratingIds &&
-//     this.ratingIds.length > 0 &&
-//     this.isModified('ratingIds')
-//   ) {
-//     const Rating = this.db.model('Rating');
-//     const ratings = await Rating.findById({ _id: { $in: this.ratingIds } });
 
-//     if (ratings.length > 0) {
-//       const sum = ratings.reduce(
-//         (acc: any, rating: any) => acc + rating.rating,
-//         0
-//       );
-//       this.averageRating = Number((sum / ratings.length).toFixed(1));
-//     }
-//   }
-//   next();
-// });
 
-// Virtual for contractor's full email (businessEmail or user email)
-// ContractorSchema.virtual('email').get(async function () {
-//   if (this.businessEmail) return this.businessEmail;
 
-//   const User = this.db.model('User');
-//   const user = await User.findById(this.userId);
-//   return user?.email;
-// });
 
-// Static method to find contractors by trade
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ContractorSchema.statics.findByTrade = function (tradeName: string) {
   return this.find({ 'tradeProjects.trade': tradeName });
 };

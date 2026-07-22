@@ -9,7 +9,6 @@ const ClientSchema = new mongoose.Schema<ClientDocument>(
       required: true,
     },
 
-    // Personal Info
     firstName: { type: String, required: true, trim: true },
     lastName: { type: String, required: true, trim: true },
     phone: {
@@ -65,9 +64,8 @@ ClientSchema.index({ userId: 1 }, { unique: true });
 ClientSchema.index({ firstName: 1, lastName: 1 });
 ClientSchema.index({ 'address.city': 1, 'address.province': 1 });
 
-// Pre-save middleware
 ClientSchema.pre('save', function (next) {
-  // Check if profile is complete
+
   this.isProfileComplete = !!(
     this.firstName &&
     this.lastName &&

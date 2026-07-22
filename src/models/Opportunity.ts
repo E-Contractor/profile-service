@@ -9,7 +9,7 @@ const OpportunitySchema = new Schema<OpportunityDocument>(
     },
     projectName: {
       type: String,
-      // required: true,
+
     },
     projectDescription: { type: String },
     price: {
@@ -18,21 +18,21 @@ const OpportunitySchema = new Schema<OpportunityDocument>(
     },
     classification: {
       type: String,
-      // required: true
+
     },
     projectType: {
       type: String,
-      // required: true,
+
     },
     contractorRole: {
       type: [String],
       enum: ['general', 'trade', 'both'],
-      // required: true
+
     },
     generalProjects: { type: [String] },
     tradeProjects: [
       {
-        trade: { type: String /*required: true*/ },
+        trade: { type: String  },
         specialties: { type: [String], default: [] },
       },
     ],
@@ -50,14 +50,3 @@ export const Opportunity = mongoose.model<OpportunityDocument>(
   'Opportunities',
   OpportunitySchema
 );
-
-// const UserSchema: Schema = new Schema<IUser>({
-//   firstname: { type: String, required: true },
-//   lastname: { type: String, required: true },
-//   userRole: { type: String, required: true },
-// });
-
-// const User = model<IUser>('User', UserSchema);
-// const Opportunity = model<IOpportunity>('Opportunities', OpportunitySchema);
-
-// export { User, Opportunity };

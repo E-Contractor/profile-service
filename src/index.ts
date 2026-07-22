@@ -1,32 +1,34 @@
 import express, { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { connectDB } from './config/db';
 import cors from 'cors';
+import helmet from 'helmet';
 import router from './routes/profile.route';
 import cookieParser from 'cookie-parser';
+import { buildCorsOptions } from './config/cors';
+import { startHttpServer } from './config/server';
 
 const app = express();
 const PORT = process.env.PORT || 3002;
 
+app.use(helmet());
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(
-  cors({
-    origin: [
-      // Frontend URL
-      process.env.FRONTEND_URL || 'http://localhost:5173',
-      // API Gateway URL
-      process.env.API_GATEWAY_URL || 'http://localhost:3000',
-      // DevTunnels pattern
-      /https:\/\/.*\.devtunnels\.ms\/?$/,
-      'http://localhost:5173',
-      'http://localhost:3000',
-    ],
-    credentials: true,
-  })
-);
+app.use(cors(buildCorsOptions()));
 
-app.get('/', (req: Request, res: Response) => {
+app.get('/health', (_req: Request, res: Response) => {
+  const mongoUp = mongoose.connection.readyState === 1;
+  res.status(mongoUp ? 200 : 503).json({
+    success: mongoUp,
+    service: 'profile-service',
+    mongo: mongoUp ? 'connected' : 'disconnected',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get('/', (_req: Request, res: Response) => {
   res.json({
     success: true,
     message: 'Profile Service API',
@@ -38,9 +40,11 @@ app.use('/api/profiles', router);
 
 const startServer = async () => {
   await connectDB();
-  console.log('connected');
-  app.listen(PORT, () => {
-    console.log('Server is running on PORT: ', PORT);
+  startHttpServer({
+    app,
+    port: PORT,
+    serviceName: 'profile-service',
+    onShutdown: () => mongoose.connection.close(),
   });
 };
 

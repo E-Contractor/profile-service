@@ -24,9 +24,8 @@ export interface EmergencyContact {
 
 export interface ClientDocument extends Document {
   _id: Types.ObjectId;
-  userId: Types.ObjectId; // Reference to User from auth-service
+  userId: Types.ObjectId;
 
-  // Personal Info
   firstName: string;
   lastName: string;
   phone?: string;
@@ -37,16 +36,13 @@ export interface ClientDocument extends Document {
   occupation?: string;
   description?: string;
 
-  // Emergency Contact
   emergencyContact?: EmergencyContact;
 
-  // Profile completion
   isProfileComplete: boolean;
 
   createdAt: Date;
   updatedAt: Date;
 
-  // Virtual fields
   fullName: string;
 }
 
@@ -64,42 +60,36 @@ export interface PortfolioItem {
 
 export interface ContractorDocument extends Document {
   _id: Types.ObjectId;
-  userId: Types.ObjectId; // Reference to User from auth-service
+  userId: Types.ObjectId;
 
-  // Personal Information
   firstName?: string;
   lastName?: string;
 
-  // Company Information
   companyName: string;
   licenseNumber: string;
   yearsOfExperience: number;
   isPcab?: boolean;
   pcab?: string;
 
-  // Contract Information
   businessEmail?: string;
   phone: string;
   address?: Address;
 
-  // Business Details
   contractorRole: 'general' | 'trade' | 'both';
   serviceType: ('design' | 'build')[];
   generalProjects: string[];
   tradeProjects: Trade[];
 
-  // Performance Metrics
   ratingStats?: {
     averageRating: number;
     totalRatings: number;
     lastUpdated: Date;
   };
 
-  // Verification & status
   isVerified: boolean;
   verificationDocuments: {
     governmentDocument?: string;
-    licenseDocument?: string; // File path/URL
+    licenseDocument?: string;
     taxDocument?: string;
     businessPermit?: string;
     companyProfile?: string;
@@ -110,22 +100,18 @@ export interface ContractorDocument extends Document {
     gis?: string;
   };
 
-  // Profile
   profileImage?: string;
   description?: string;
   portfolio?: PortfolioItem[];
   website?: string;
 
-  // Profile completion
   isProfileComplete: boolean;
 
-  // Business Operations
   emergencyContact?: EmergencyContact;
 
   createdAt: Date;
   updatedAt: Date;
 
-  // Virtual fields
   fullName: string;
 
   findByTrade(tradeName: string): Promise<ContractorDocument[]>;
@@ -146,7 +132,7 @@ interface Trade {
 }
 
 export interface RegisterUser {
-  // userId: string;
+
   email: string;
   password: string;
   role: string;
@@ -190,7 +176,7 @@ export interface RegisterContractorRequest extends RegisterUser {
   isVerified: boolean;
   verificationDocuments: {
     governmentDocument?: string;
-    licenseDocument?: string; // File path/URL
+    licenseDocument?: string;
     taxDocument?: string;
     businessPermit?: string;
     companyProfile?: string;

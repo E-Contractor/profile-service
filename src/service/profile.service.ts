@@ -44,23 +44,23 @@ export const createClientProfile = async (data: {
   }
 };
 
-// export const createContractorProfile = async (data: {
-//   userId: string;
-//   companyName: string;
-//   firstName?: string;
-//   lastName?: string;
-//   licenseNumber?: string;
-//   yearsOfExperience?: number;
-//   contractorRole?: 'general' | 'trade' | 'both';
-//   phone?: string;
-//   businessEmail?: string;
-//   address?: any;
-//   generalProjects?: string[];
-//   tradeProjects?: string[];
-//   description?: string;
-//   website?: string;
-//   emergencyContact?: any;
-// }) => {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export const createContractorProfile = async (data: ContractorDocument) => {
   try {
     if (data.licenseNumber) {
@@ -127,13 +127,23 @@ export const createContractorProfile = async (data: ContractorDocument) => {
 
 export const getProfile = async (userId: string, role?: string) => {
   try {
-    let result;
+    let result: any;
 
     if (role === 'client') {
       result = await Client.findOne({ userId }).lean();
     } else if (role === 'contractor') {
-      // result = await Contractor.findById({ userId }).lean();
-      result = await Contractor.findOne({ userId }).lean();
+      
+      
+      
+      
+      result = await Contractor.findOne({ userId }).select('-portfolio').lean();
+      if (result) {
+        const agg = await Contractor.aggregate([
+          { $match: { _id: result._id } },
+          { $project: { count: { $size: { $ifNull: ['$portfolio', []] } } } },
+        ]);
+        result.portfolioCount = agg[0]?.count ?? 0;
+      }
     }
 
     if (!result) {
@@ -158,6 +168,20 @@ export const getProfile = async (userId: string, role?: string) => {
     return result;
   } catch (error: any) {
     throw new Error(`Get profile failed: ${error.message}`);
+  }
+};
+
+
+
+export const getPortfolio = async (userId: string) => {
+  try {
+    const result = await Contractor.findOne({ userId }).select('portfolio').lean();
+    if (!result) {
+      throw new Error('Contractor profile not found');
+    }
+    return (result as any).portfolio ?? [];
+  } catch (error: any) {
+    throw new Error(`Get portfolio failed: ${error.message}`);
   }
 };
 

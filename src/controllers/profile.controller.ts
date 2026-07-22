@@ -1,6 +1,11 @@
 import { Request, Response } from 'express';
 import * as ProfileService from '../service/profile.service';
 import { Contractor } from '../models/Contractor';
+import { Client } from '../models/Client';
+import {
+  findMatchingContractors,
+  OpportunityMatchInput,
+} from '../service/matcher.service';
 
 interface AuthRequest extends Request {
   user?: any;
@@ -157,7 +162,7 @@ export const updateMeController = async (
       return;
     }
 
-    // Role-specific validation
+    
     if (role === 'client') {
       const { firstName, lastName } = req.body;
       if (
@@ -313,7 +318,7 @@ export const updateContractorProfileController = async (
   }
 };
 
-// ===== PROFILE COMPLETION CONTROLLERS =====
+
 
 export const getClientCompletionController = async (
   req: AuthRequest,
@@ -349,7 +354,7 @@ export const getClientCompletionController = async (
   }
 };
 
-// Get contractor completion (authenticated user)
+
 export const getContractorCompletionController = async (
   req: AuthRequest,
   res: Response
@@ -384,7 +389,7 @@ export const getContractorCompletionController = async (
   }
 };
 
-// Get profile completion status (service-to-service)
+
 export const getCompletionController = async (req: Request, res: Response) => {
   try {
     const { userId, role } = req.params;
@@ -456,16 +461,16 @@ export const searchContractorsController = async (
       limit = '10',
     } = req.query;
 
-    // res.locals.isPcab is set by the pcab/non-pcab wrapper controllers
+    
     const isPcab = res.locals.isPcab || isPcabQuery;
 
-    // Build search filters
+    
     const filters: any = {};
 
-    // PCAB classification filter
-    // Handles both new data (with isPcab field) and old data (only has pcab string)
+    
+    
     if (isPcab === 'true') {
-      // PCAB: explicitly marked OR old data with a pcab category value
+      
       if (!filters.$and) filters.$and = [];
       filters.$and.push({
         $or: [
@@ -474,7 +479,7 @@ export const searchContractorsController = async (
         ],
       });
     } else if (isPcab === 'false') {
-      // Non-PCAB: not marked as PCAB AND pcab field is empty/missing
+      
       filters.isPcab = { $ne: true };
       filters.pcab = { $in: [null, ''] };
     }
@@ -524,15 +529,15 @@ export const searchContractorsController = async (
       filters.pcab = { $in: pcabValues };
     }
 
-    // if (
-    //   contractorRole &&
-    //   ['general', 'trade', 'both'].includes(contractorRole as string)
-    // ) {
-    //   filters.contractorRole = contractorRole;
-    // }
+    
+    
+    
+    
+    
+    
 
     if (role) {
-      // Parse roles - frontend sends comma-separated string like "general,trade"
+      
       const rolesString = Array.isArray(role)
         ? role.join(',')
         : role as string;
@@ -542,13 +547,13 @@ export const searchContractorsController = async (
       const hasTradeRole = roles.includes('trade');
 
       if (hasGeneralRole && hasTradeRole) {
-        // Both "general" AND "trade" selected → only show "both" role
+        
         filters.contractorRole = 'both';
       } else if (hasGeneralRole) {
-        // Only "general" selected → show "general" and "both"
+        
         filters.contractorRole = { $in: ['general', 'both'] };
       } else if (hasTradeRole) {
-        // Only "trade" selected → show "trade" and "both"
+        
         filters.contractorRole = { $in: ['trade', 'both'] };
       }
     }
@@ -558,18 +563,18 @@ export const searchContractorsController = async (
       filters.serviceType = { $all: serviceTypes };
     }
 
-    // if (minRating) {
-    //   const rating = parseFloat(minRating as string);
-    //   if (!isNaN(rating) && rating >= 0 && rating <= 5) {
-    //     filters['ratingStats.averageRating'] = { $gte: rating };
-    //   }
-    // }
+    
+    
+    
+    
+    
+    
 
-    // if (isVerified !== undefined) {
-    //   filters.isVerified = isVerified === 'true';
-    // }
+    
+    
+    
 
-    // Text search in company name or description
+    
     if (search) {
       if (!filters.$and) filters.$and = [];
       filters.$and.push({
@@ -582,20 +587,20 @@ export const searchContractorsController = async (
       });
     }
 
-    // Pagination
+    
     const pageNum = Math.max(1, parseInt(page as string));
-    const limitNum = Math.min(50, Math.max(1, parseInt(limit as string))); // Max 50 results per page
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit as string))); 
     const skip = (pageNum - 1) * limitNum;
 
-    // Execute search
+    
     const [contractors, total] = await Promise.all([
       Contractor.find(filters)
         // .populate('userId', 'email status isEmailVerified')
-        .select('-verificationDocuments -emergencyContact') // Exclude sensitive data
+        .select('-verificationDocuments -emergencyContact') 
         .sort({
           'ratingStats.averageRating': -1,
           'ratingStats.totalRatings': -1,
-          // isVerified: -1,
+          
           createdAt: -1,
           companyName: 1,
         })
@@ -605,7 +610,7 @@ export const searchContractorsController = async (
       Contractor.countDocuments(filters),
     ]);
 
-    // Calculate pagination info
+    
     const totalPages = Math.ceil(total / limitNum);
 
     res.json({
@@ -630,8 +635,8 @@ export const searchContractorsController = async (
         pcab,
         role,
         serviceType,
-        // minRating,
-        // isVerified,
+        
+        
         search,
       },
     });
@@ -709,7 +714,7 @@ export const getPublicContractorProfileController = async (
 
     const contractor = await Contractor.findById(contractorId)
       .populate('userId', 'email status isEmailVerified')
-      .select('-verificationDocuments -emergencyContact') // Exclude sensitive data
+      .select('-verificationDocuments -emergencyContact') 
       .lean();
 
     if (!contractor) {
@@ -735,7 +740,38 @@ export const getPublicContractorProfileController = async (
   }
 };
 
-// ===== PORTFOLIO CONTROLLERS =====
+
+
+
+
+export const getMyPortfolioController = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+    const portfolio = await ProfileService.getPortfolio(userId);
+    return res.status(200).json({ success: true, data: portfolio });
+  } catch (error: any) {
+    return res
+      .status(404)
+      .json({ success: false, message: error.message || 'Failed to retrieve portfolio' });
+  }
+};
+
+
+
+export const getPortfolioByUserIdController = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const portfolio = await ProfileService.getPortfolio(userId);
+    return res.status(200).json({ success: true, data: portfolio });
+  } catch (error: any) {
+    return res
+      .status(404)
+      .json({ success: false, message: error.message || 'Failed to retrieve portfolio' });
+  }
+};
 
 export const addPortfolioItemController = async (
   req: AuthRequest,
@@ -747,7 +783,18 @@ export const addPortfolioItemController = async (
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const { title, description, location, completedAt, trade, specialty, images } = req.body;
+    const {
+      title,
+      description,
+      location,
+      projectType,
+      status,
+      completedAt,
+      tradeTags,
+      trade,
+      specialty,
+      images,
+    } = req.body;
     if (!title?.trim()) {
       return res.status(400).json({ success: false, message: 'Title is required' });
     }
@@ -761,7 +808,10 @@ export const addPortfolioItemController = async (
       title: title.trim(),
       description,
       location,
+      projectType,
+      status,
       completedAt: completedAt ? new Date(completedAt) : undefined,
+      tradeTags: tradeTags || [],
       trade,
       specialty,
       images: images || [],
@@ -802,11 +852,25 @@ export const updatePortfolioItemController = async (
       return res.status(404).json({ success: false, message: 'Portfolio item not found' });
     }
 
-    const { title, description, location, completedAt, trade, specialty, images } = req.body;
+    const {
+      title,
+      description,
+      location,
+      projectType,
+      status,
+      completedAt,
+      tradeTags,
+      trade,
+      specialty,
+      images,
+    } = req.body;
     if (title !== undefined) item.title = title;
     if (description !== undefined) item.description = description;
     if (location !== undefined) item.location = location;
+    if (projectType !== undefined) item.projectType = projectType;
+    if (status !== undefined) item.status = status;
     if (completedAt !== undefined) item.completedAt = completedAt ? new Date(completedAt) : undefined;
+    if (tradeTags !== undefined) item.tradeTags = tradeTags;
     if (trade !== undefined) item.trade = trade;
     if (specialty !== undefined) item.specialty = specialty;
     if (images !== undefined) item.images = images;
@@ -855,5 +919,97 @@ export const deletePortfolioItemController = async (
   } catch (error: any) {
     console.error('deletePortfolioItem error:', error);
     return res.status(500).json({ success: false, message: error.message || 'Failed to delete portfolio item' });
+  }
+};
+
+
+
+export const getStatsBreakdownController = async (_req: Request, res: Response) => {
+  try {
+    const [contractorByProvince, clientByProvince, byTradeSpecialty] = await Promise.all([
+      Contractor.aggregate([
+        { $match: { 'address.province': { $exists: true, $ne: '' } } },
+        { $group: { _id: '$address.province', count: { $sum: 1 } } },
+      ]),
+      Client.aggregate([
+        { $match: { 'address.province': { $exists: true, $ne: '' } } },
+        { $group: { _id: '$address.province', count: { $sum: 1 } } },
+      ]),
+      Contractor.aggregate([
+        { $unwind: '$tradeProjects' },
+        { $unwind: { path: '$tradeProjects.specialties', preserveNullAndEmptyArrays: true } },
+        {
+          $group: {
+            _id: {
+              trade: '$tradeProjects.trade',
+              specialty: '$tradeProjects.specialties.specialty',
+            },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.trade',
+            count: { $sum: '$count' },
+            specialties: {
+              $push: {
+                $cond: [
+                  { $ifNull: ['$_id.specialty', false] },
+                  { specialty: '$_id.specialty', count: '$count' },
+                  '$$REMOVE',
+                ],
+              },
+            },
+          },
+        },
+      ]),
+    ]);
+
+    const provinceMap = new Map<string, number>();
+    for (const row of [...contractorByProvince, ...clientByProvince]) {
+      if (!row._id) continue;
+      provinceMap.set(row._id, (provinceMap.get(row._id) ?? 0) + row.count);
+    }
+    const byProvince = Array.from(provinceMap.entries())
+      .map(([province, count]) => ({ province, count }))
+      .sort((a, b) => a.province.localeCompare(b.province));
+
+    const byTradeSpecialtyFormatted = byTradeSpecialty
+      .filter((t: any) => t._id)
+      .map((t: any) => ({
+        trade: t._id,
+        count: t.count,
+        specialties: (t.specialties || []).sort((a: any, b: any) =>
+          a.specialty.localeCompare(b.specialty)
+        ),
+      }));
+
+    return res.status(200).json({
+      success: true,
+      data: { byProvince, byTradeSpecialty: byTradeSpecialtyFormatted },
+    });
+  } catch (error: any) {
+    console.error('getStatsBreakdown error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to load stats breakdown',
+    });
+  }
+};
+
+export const matchContractorsController = async (req: Request, res: Response) => {
+  try {
+    const opp = req.body as OpportunityMatchInput;
+    const userIds = await findMatchingContractors(opp);
+    return res.status(200).json({
+      success: true,
+      data: { userIds, count: userIds.length },
+    });
+  } catch (error: any) {
+    console.error('matchContractors error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to match contractors',
+    });
   }
 };
